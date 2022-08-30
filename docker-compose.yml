@@ -11,6 +11,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - /vol1/zk-data:/var/lib/zookeeper/data
+      - /vol2/zk-txn-logs:/var/lib/zookeeper/log
 
   broker:
     image: confluentinc/cp-kafka:7.2.0
@@ -29,6 +32,8 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    volumes:
+      - /vol3/kafka-data:/var/lib/kafka/data
 
   ksqldb-server:
     image: confluentinc/ksqldb-server:0.27.2
