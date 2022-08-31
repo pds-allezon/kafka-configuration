@@ -37,18 +37,38 @@ services:
     volumes:
       - /vol3/kafka-data:/var/lib/kafka/data
 
+  init-kafka:
+    image: confluentinc/cp-kafka:7.2.0
+    depends_on:
+      - broker
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server broker:9092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server broker:9092 --create --if-not-exists --topic user-tags --replication-factor 1 --partitions 1
+      kafka-configs --bootstrap-server broker:9092  --entity-type topics --entity-name user-tags --alter --add-config retention.ms=900000
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server broker:9092 --list
+      "
+
   ksqldb-server:
     image: confluentinc/ksqldb-server:0.27.2
     hostname: ksqldb-server
     container_name: ksqldb-server
     depends_on:
       - broker
+      - init-kafka
     ports:
       - "8088:8088"
     environment:
       KSQL_LISTENERS: http://0.0.0.0:8088
       KSQL_BOOTSTRAP_SERVERS: broker:9092
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "false"
 
   ksqldb-cli:
     image: confluentinc/ksqldb-cli:0.27.2
